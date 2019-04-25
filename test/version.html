@@ -1,33 +1,65 @@
 <html>
 	<head>
-		<title>My first Three.js app</title>
+		<title>add</title>
 		<style>
 			body { margin: 0; }
 			canvas { width: 100%; height: 100% }
 		</style>
+		<script src="../libs/build/three.js"></script>
+		<script src="../libs/tools/dat.gui.js"></script>
+		<script src="../libs/tools/stats.min.js"></script>
 	</head>
 	<body>
-        <script src="../libs/build/three.js"></script>
 		<script>
 			var scene = new THREE.Scene();
 			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+			camera.position.z = 50;
+			camera.lookAt(scene.position)
+			scene.add(camera)
+
+			var flag = false
+			var button, startX, startY
 
 			var renderer = new THREE.WebGLRenderer();
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
 
-			var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+			var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 			var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
 			var cube = new THREE.Mesh( geometry, material );
 			scene.add( cube );
 
-			camera.position.z = 50;
-
+			window.addEventListener('mousedown', function (e) {
+				flag = true
+				button = e.button
+				startX = e.clientX
+				startY = e.clientY
+			})
+			window.addEventListener('mousemove', function (e) {
+				if ( !flag ) return
+				if ( button === 0 ) {
+					console.log(e.clientX - startX, e.clientY - startY)
+					camera.position.x -= (e.clientX - startX) / 10
+					startX = e.clientX
+					camera.position.y +=(e.clientY - startY) / 10
+					startY = e.clientY
+					camera.lookAt(scene.position)
+				} else if ( button === 2) {
+					
+				}
+			})
+			window.addEventListener('mouseup', function () {
+				flag = false
+			})
+			window.addEventListener('wheel', function (e) {
+				console.log(e.deltaY)
+				camera.position.z += e.deltaY / 50
+			})
 			var render = function () {
 				requestAnimationFrame( render );
 
-				cube.rotation.x += 0.1;
-				cube.rotation.y += 0.1;
+				// cube.rotation.x += 0.1;
+				// cube.rotation.y += 0.1;
 
 				renderer.render(scene, camera);
 			};
