@@ -18,59 +18,63 @@
     <script>
         var ctrl = {}
         var flag = false
-        var button, startX, startY,startZ
+        var button, startX = 0, startY = 0, deltaX = 0, deltaY = 0, worldX = 0, worldY = 0
+        var RX = 0, RY = 0, TX = 0, TY = 0
         var scene = new THREE.Scene()
         var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, .1, 1000)
-        camera.position.x = -30
-        camera.position.y = 30
-        camera.position.z = 50
+        var distance = 100
+        // var camerax = 0, cameray = 0, cameraz = distance
+        camera.position.x = distance * Math.sin(RX) * Math.cos(RY)
+        camera.position.y = distance * Math.sin(RY)
+        camera.position.z = distance * Math.cos(RX) * Math.cos(RY)
         camera.lookAt(scene.position)
         scene.add(camera)
 
-        scene.fog = new THREE.Fog(0xffffff, .015, 1000)
+        // scene.fog = new THREE.Fog(0xffffff, .015, 1000)
         var renderer = new THREE.WebGLRenderer()
         renderer.setClearColor(0xeeeeee)
         renderer.setSize(window.innerWidth, window.innerHeight)
         renderer.shadowMapEnabled = true
 
-        var bigObj = new THREE.Object3D()
+        var world = new THREE.Object3D()
+        scene.add(world)
 
         var planeG = new THREE.PlaneGeometry(60, 30, 1, 1)
-        var planeM = new THREE.MeshLambertMaterial({color: 0xdddddd})
+        var planeM = new THREE.MeshLambertMaterial({color: 0xdddddd, side: THREE.DoubleSide})
         var plane = new THREE.Mesh(planeG, planeM)
         plane.rotation.x = -.5 * Math.PI
         plane.receiveShadow = true
-        bigObj.add(plane)
-        // scene.add(plane)
+        world.add(plane)
 
         var spot = new THREE.SpotLight(0xffffff)
         spot.position.set(-40, 60, -10)
         spot.castShadow = true
-        bigObj.add(spot)
-        scene.add(bigObj)
+        world.add(spot)
+
         document.querySelector('#GL').appendChild(renderer.domElement)
-        // renderer.render(scene, camera)
         function animate() {
             stats.update()
-            // camera.position.x = ctrl.camerax || -30
-            // camera.position.y = ctrl.cameray || 30
-            // camera.position.z = ctrl.cameraz || 40
-            // camera.lookAt(scene.position)
-            scene.traverse(function (e) {
-                if (e instanceof THREE.Mesh && e !== plane) {
-                    e.rotation.x += Math.random() * ctrl.rotationSpeed
-                    e.rotation.y += Math.random() * ctrl.rotationSpeed
-                    e.rotation.z += Math.random() * ctrl.rotationSpeed
-                }
-            })
+            // scene.traverse(function (e) {
+            //     if (e instanceof THREE.Mesh && e !== plane) {
+            //         e.rotation.x += Math.random() * ctrl.rotationSpeed
+            //         e.rotation.y += Math.random() * ctrl.rotationSpeed
+            //         e.rotation.z += Math.random() * ctrl.rotationSpeed
+            //     }
+            // })
+            world.position
+
+            camera.position.x = distance * Math.sin(RX + deltaX) * Math.cos(RY + deltaY)
+            camera.position.y = distance * Math.sin(RY + deltaY)
+            camera.position.z = distance * Math.cos(RX + deltaX) * Math.cos(RY + deltaY)
+            camera.lookAt(scene.position)
             renderer.render(scene, camera)
             requestAnimationFrame(animate)
         }
         ctrl = new function() {
             this.rotationSpeed = 0.02
-            this.camerax = -30
-            this.cameray = 30
-            this.cameraz = 50
+            // this.camerax = -30
+            // this.cameray = 30
+            // this.cameraz = 50
             this.objs = 0
             this.addCube = function () {
                 var l = Math.ceil(Math.random() * 3)
@@ -87,15 +91,15 @@
                 cube.rotation.x = 2 * Math.random() * Math.PI
                 cube.rotation.y = 2 * Math.random() * Math.PI
                 cube.rotation.z = 2 * Math.random() * Math.PI
-                bigObj.add(cube)
+                world.add(cube)
                 this.objs = scene.children.length
             }
         }
         var gui = new DAT.GUI()
-        gui.add(ctrl, 'rotationSpeed', 0, 1)
-        gui.add(ctrl, 'camerax', -100, 100)
-        gui.add(ctrl, 'cameray', -100, 100)
-        gui.add(ctrl, 'cameraz', -100, 100)
+        // gui.add(ctrl, 'rotationSpeed', 0, 1)
+        // gui.add(ctrl, 'camerax', -100, 100)
+        // gui.add(ctrl, 'cameray', -100, 100)
+        // gui.add(ctrl, 'cameraz', -100, 100)
         gui.add(ctrl, 'addCube')
         gui.add(ctrl, 'objs').listen()
         var stats = new Stats()
@@ -106,41 +110,42 @@
 
         document.querySelector("#stats").appendChild(stats.domElement)
         animate()
+        var rotateX = 0
+        var rotateY = 0
+        var translateX = 0
+        var translateY = 0
         window.addEventListener('mousedown', function (e) {
-				flag = true
-				button = e.button
-				startX = e.clientX
-                startY = e.clientY
-                startZ = 0
-			})
+            flag = true
+            button = e.button
+            startX = e.clientX
+            startY = e.clientY
+        })
         window.addEventListener('mousemove', function (e) {
             if ( !flag ) return
-            if ( button === 0 ) {
-                bigObj.position.x += (e.clientX - startX) / 1000
-                startX = e.clientX
-                bigObj.position.y -= (e.clientY - startY) / 1000
-                startY = e.clientY
-            } else if ( button === 2) {
-                camera.position.x += Math.sin((e.clientX - startX) / 1000)
-                // camera.position.y += (e.clientY - startY) / 1000
-                // startY = e.clientY
-                if (camera.position.z <= 0) {
-                    i = 1
-                }else if (camera.position.z >= 50) {
-                    i = -1
-                }
-                camera.position.z -= i * Math.cos((e.clientX - startX) / 1000)
-                startX = e.clientX
-                // startZ = e.clientZ
-                camera.lookAt(scene.position)
+            if ( button === 0 ) { // 平移
+                worldX = (e.clientX - startX) / 300
+                worldY = - (e.clientY - startY) / 300
+            } else if ( button === 2) { // 旋转
+                deltaX = - (e.clientX - startX) / 300
+                deltaY = (e.clientY - startY) / 300
             }
         })
         window.addEventListener('mouseup', function () {
             flag = false
+            RX += deltaX
+            RY += deltaY
+            deltaX = 0
+            deltaY = 0
+            TX += worldX
+            TY += worldY
+            worldX = 0
+            worldY = 0
         })
         window.addEventListener('wheel', function (e) {
-            console.log(e.deltaY)
-            camera.position.z += e.deltaY / 50
+            var size = - 0.1 * Math.abs(e.deltaY) / e.deltaY
+            bigObj.scale.x +=  size
+            bigObj.scale.y +=  size
+            bigObj.scale.z +=  size
         })
         window.oncontextmenu = function (e) {
             e.preventDefault()

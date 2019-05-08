@@ -1,4 +1,4 @@
-import path from 'path'
+const path = require('path')
 
 module.exports = {
     entry: './index.js',
@@ -8,6 +8,7 @@ module.exports = {
     },
     devServer: {
         contentBase: path.join(__dirname, "./"), 
-        open: true
+        open: true,
+        port: 8888
     }
 }
