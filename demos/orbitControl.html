@@ -7,7 +7,7 @@
     <script src="../libs/build/three.js"></script>
     <script src="../libs/tools/dat.gui.js"></script>
     <script src="../libs/tools/stats.min.js"></script>
-    <title>add Cude</title>
+    <title>Orbit Control</title>
     <style>
         body{margin:0;overflow: hidden;}
     </style>
@@ -18,11 +18,15 @@
     <script>
         var ctrl = {}
         var flag = false
+        var anim = 3
         var button, startX = 0, startY = 0, deltaX = 0, deltaY = 0, worldX = 0, worldY = 0
         var RX = 0, RY = 0, TX = 0, TY = 0
+        var px = 0, py = 0, pz = 0
         var scene = new THREE.Scene()
         var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, .1, 1000)
         var distance = 100
+        var vector = new THREE.Vector3(30, 30, 30)
+
         // var camerax = 0, cameray = 0, cameraz = distance
         camera.position.x = distance * Math.sin(RX) * Math.cos(RY)
         camera.position.y = distance * Math.sin(RY)
@@ -46,23 +50,33 @@
         plane.receiveShadow = true
         world.add(plane)
 
-        var spot = new THREE.SpotLight(0xffffff)
-        spot.position.set(-40, 60, -10)
+        // var spot = new THREE.SpotLight(0xffffff)
+        var spot = new THREE.AmbientLight(0xff0000)
+        // spot.position.set(-40, 60, -10)
         spot.castShadow = true
         world.add(spot)
 
         document.querySelector('#GL').appendChild(renderer.domElement)
         function animate() {
             stats.update()
-            // scene.traverse(function (e) {
-            //     if (e instanceof THREE.Mesh && e !== plane) {
-            //         e.rotation.x += Math.random() * ctrl.rotationSpeed
-            //         e.rotation.y += Math.random() * ctrl.rotationSpeed
-            //         e.rotation.z += Math.random() * ctrl.rotationSpeed
-            //     }
-            // })
-            world.position
-
+            scene.traverse(function (e) {
+                if (e instanceof THREE.Mesh && e !== plane) {
+                    e.rotation.x += Math.random() * ctrl.rotationSpeed
+                    e.rotation.y += Math.random() * ctrl.rotationSpeed
+                    e.rotation.z += Math.random() * ctrl.rotationSpeed
+                }
+            })
+            if(anim > 0) {
+                // RX += .015
+                // RY += .015
+                // distance -= 1
+                anim -= .1
+            }
+            world.position.set(
+                TX * Math.cos(RX) + TY * Math.cos(RY) * Math.cos(RX) + px,
+                TY * Math.cos(RY) + py,
+                TX * Math.sin(RX) + TY * Math.cos(RY) * Math.sin(RX) + pz
+            )
             camera.position.x = distance * Math.sin(RX + deltaX) * Math.cos(RY + deltaY)
             camera.position.y = distance * Math.sin(RY + deltaY)
             camera.position.z = distance * Math.cos(RX + deltaX) * Math.cos(RY + deltaY)
@@ -96,7 +110,7 @@
             }
         }
         var gui = new DAT.GUI()
-        // gui.add(ctrl, 'rotationSpeed', 0, 1)
+        gui.add(ctrl, 'rotationSpeed', 0, 1)
         // gui.add(ctrl, 'camerax', -100, 100)
         // gui.add(ctrl, 'cameray', -100, 100)
         // gui.add(ctrl, 'cameraz', -100, 100)
@@ -122,10 +136,10 @@
         })
         window.addEventListener('mousemove', function (e) {
             if ( !flag ) return
-            if ( button === 0 ) { // 平移
-                worldX = (e.clientX - startX) / 300
-                worldY = - (e.clientY - startY) / 300
-            } else if ( button === 2) { // 旋转
+            if ( button === 2 ) { // 平移
+                TX = (e.clientX - startX) / 30
+                TY = - (e.clientY - startY) / 30
+            } else if ( button === 0) { // 旋转
                 deltaX = - (e.clientX - startX) / 300
                 deltaY = (e.clientY - startY) / 300
             }
@@ -136,16 +150,19 @@
             RY += deltaY
             deltaX = 0
             deltaY = 0
-            TX += worldX
-            TY += worldY
-            worldX = 0
-            worldY = 0
+            // TX += worldX
+            // TY += worldY
+            // worldX = 0
+            // worldY = 0
+            px += TX * Math.cos(RX) + TY * Math.cos(RY) * Math.cos(RX)
+            py += TY * Math.cos(RY)
+            pz += TX * Math.sin(RX) + TY * Math.cos(RY) * Math.sin(RX)
+            TX = 0
+            TY = 0
         })
         window.addEventListener('wheel', function (e) {
-            var size = - 0.1 * Math.abs(e.deltaY) / e.deltaY
-            bigObj.scale.x +=  size
-            bigObj.scale.y +=  size
-            bigObj.scale.z +=  size
+            var size = 2 * Math.abs(e.deltaY) / e.deltaY
+            distance += size
         })
         window.oncontextmenu = function (e) {
             e.preventDefault()
