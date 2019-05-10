@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="../libs/build/three.js"></script>
+    <script src="../libs/tools/dat.gui.js"></script>
+    <script src="../libs/tools/stats.min.js"></script>
+    <title>Orbit Camera</title>
+    <style>
+        body{margin:0;overflow: hidden;}
+    </style>
+</head>
+<body>
+    <div id="GL"></div>
+    <div id="stats"></div>
+    <script>
+        var ctrl = {}
+        var flag = false
+        var anim = 3
+        var button, startX = 0, startY = 0, deltaX = 0, deltaY = 0, worldX = 0, worldY = 0
+        var RX = 0, RY = 0, TX = 0, TY = 0
+        var px = 0, py = 0, pz = 0
+        var scene = new THREE.Scene()
+        var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, .1, 1000)
+        var distance = 100
+        var vector = new THREE.Vector3(30, 30, 30)
+
+        camera.position.x = distance * Math.sin(RX) * Math.cos(RY)
+        camera.position.y = distance * Math.sin(RY)
+        camera.position.z = distance * Math.cos(RX) * Math.cos(RY)
+        camera.lookAt(scene.position)
+        scene.add(camera)
+
+        // scene.fog = new THREE.Fog(0xffffff, .015, 1000)
+        var renderer = new THREE.WebGLRenderer()
+        renderer.setClearColor(0x000000)
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        renderer.shadowMapEnabled = true
+
+        var world = new THREE.Object3D()
+        scene.add(world)
+
+        var planeG = new THREE.PlaneGeometry(60, 30, 1, 1)
+        var planeM = new THREE.MeshLambertMaterial({color: 0x666666, side: THREE.DoubleSide})
+        var plane = new THREE.Mesh(planeG, planeM)
+        plane.rotation.x = -.5 * Math.PI
+        plane.receiveShadow = true
+        world.add(plane)
+
+        var spot = new THREE.SpotLight(0xffffff)
+        // var spot = new THREE.AmbientLight(0xffffff)
+        spot.position.set(-40, 60, -10)
+        spot.castShadow = true
+        world.add(spot)
+
+        document.querySelector('#GL').appendChild(renderer.domElement)
+        function animate() {
+            stats.update()
+            scene.traverse(function (e) {
+                if (e instanceof THREE.Mesh && e !== plane) {
+                    e.rotation.x += Math.random() * ctrl.rotationSpeed
+                    e.rotation.y += Math.random() * ctrl.rotationSpeed
+                    e.rotation.z += Math.random() * ctrl.rotationSpeed
+                }
+            })
+            if(anim > 0) {
+                RX += .015
+                RY += .015
+                distance -= 1
+                anim -= .1
+            }
+            camera.position.x = distance * Math.sin(RX + deltaX) * Math.cos(RY + deltaY)
+                - (TX * Math.cos(RX) - TY * Math.sin(RY) * Math.sin(RX) + px)
+            camera.position.y = distance * Math.sin(RY + deltaY)
+                - (TY * Math.cos(RY) + py)
+            camera.position.z = distance * Math.cos(RX + deltaX) * Math.cos(RY + deltaY)
+                + (TX * Math.sin(RX) + TY * Math.sin(RY) * Math.cos(RX) - pz)
+            camera.lookAt(new THREE.Vector3(
+                - (TX * Math.cos(RX) - TY * Math.sin(RY) * Math.sin(RX) + px),
+                - (TY * Math.cos(RY) + py),
+                - (- TX * Math.sin(RX) - TY * Math.sin(RY) * Math.cos(RX) + pz)
+            ))
+            renderer.render(scene, camera)
+            requestAnimationFrame(animate)
+        }
+        ctrl = new function() {
+            this.rotationSpeed = 0.02
+            this.objs = 0
+            this.addCube = function () {
+                var l = Math.ceil(Math.random() * 3)
+                var cubeG = new THREE.BoxGeometry(l, l, l)
+                var cubeM = new THREE.MeshLambertMaterial({
+                    color: (Math.random() * .5 + .5) *  0xffffff
+                })
+                var cube = new THREE.Mesh(cubeG, cubeM)
+                cube.castShadow = true
+                cube.name = 'cube' + scene.children.length
+                cube.position.x = 60 * (Math.random() - .5)
+                cube.position.y = 5 * (Math.random())
+                cube.position.z = 30 * (Math.random() - .5)
+                cube.rotation.x = 2 * Math.random() * Math.PI
+                cube.rotation.y = 2 * Math.random() * Math.PI
+                cube.rotation.z = 2 * Math.random() * Math.PI
+                world.add(cube)
+                this.objs = scene.children.length
+            }
+        }
+        var gui = new DAT.GUI()
+        gui.add(ctrl, 'rotationSpeed', 0, 1)
+        gui.add(ctrl, 'addCube')
+        gui.add(ctrl, 'objs').listen()
+        var stats = new Stats()
+        stats.setMode(0)
+        stats.domElement.style.position = 'absolute'
+        stats.domElement.style.right = '0'
+        stats.domElement.style.top = '200px'
+
+        document.querySelector("#stats").appendChild(stats.domElement)
+        animate()
+        var rotateX = 0
+        var rotateY = 0
+        var translateX = 0
+        var translateY = 0
+        window.addEventListener('mousedown', function (e) {
+            flag = true
+            button = e.button
+            startX = e.clientX
+            startY = e.clientY
+        })
+        window.addEventListener('mousemove', function (e) {
+            if ( !flag ) return
+            if ( button === 2 ) { // 平移
+                TX = (e.clientX - startX) / 30
+                TY = - (e.clientY - startY) / 30
+            } else if ( button === 0) { // 旋转
+                deltaX = - (e.clientX - startX) / 300
+                deltaY = (e.clientY - startY) / 300
+            }
+        })
+        window.addEventListener('mouseup', function () {
+            flag = false
+            RX += deltaX
+            RY += deltaY
+            deltaX = 0
+            deltaY = 0
+
+            px += TX * Math.cos(RX) - TY * Math.sin(RY) * Math.sin(RX)
+            py += TY * Math.cos(RY)
+            pz += - TX * Math.sin(RX) - TY * Math.sin(RY) * Math.cos(RX)
+            TX = 0
+            TY = 0
+        })
+        window.addEventListener('wheel', function (e) {
+            var size = 2 * Math.abs(e.deltaY) / e.deltaY
+            // if(distance + size < 10 || distance + size > 200) {
+            //     distance += 0
+            //     return
+            // }
+            distance += size
+        })
+        window.oncontextmenu = function (e) {
+            e.preventDefault()
+        }
+    </script>
+</body>
+</html>
