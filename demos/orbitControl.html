@@ -36,7 +36,7 @@
 
         // scene.fog = new THREE.Fog(0xffffff, .015, 1000)
         var renderer = new THREE.WebGLRenderer()
-        renderer.setClearColor(0xeeeeee)
+        renderer.setClearColor(0x444444)
         renderer.setSize(window.innerWidth, window.innerHeight)
         renderer.shadowMapEnabled = true
 
@@ -67,15 +67,15 @@
                 }
             })
             if(anim > 0) {
-                // RX += .015
-                // RY += .015
-                // distance -= 1
+                RX += .015
+                RY += .015
+                distance -= 1
                 anim -= .1
             }
             world.position.set(
-                TX * Math.cos(RX) + TY * Math.cos(RY) * Math.cos(RX) + px,
+                TX * Math.cos(RX) - TY * Math.sin(RY) * Math.sin(RX) + px,
                 TY * Math.cos(RY) + py,
-                TX * Math.sin(RX) + TY * Math.cos(RY) * Math.sin(RX) + pz
+                - TX * Math.sin(RX) - TY * Math.sin(RY) * Math.cos(RX) + pz
             )
             camera.position.x = distance * Math.sin(RX + deltaX) * Math.cos(RY + deltaY)
             camera.position.y = distance * Math.sin(RY + deltaY)
@@ -86,9 +86,6 @@
         }
         ctrl = new function() {
             this.rotationSpeed = 0.02
-            // this.camerax = -30
-            // this.cameray = 30
-            // this.cameraz = 50
             this.objs = 0
             this.addCube = function () {
                 var l = Math.ceil(Math.random() * 3)
@@ -150,18 +147,19 @@
             RY += deltaY
             deltaX = 0
             deltaY = 0
-            // TX += worldX
-            // TY += worldY
-            // worldX = 0
-            // worldY = 0
-            px += TX * Math.cos(RX) + TY * Math.cos(RY) * Math.cos(RX)
+
+            px += TX * Math.cos(RX) - TY * Math.sin(RY) * Math.sin(RX)
             py += TY * Math.cos(RY)
-            pz += TX * Math.sin(RX) + TY * Math.cos(RY) * Math.sin(RX)
+            pz += - TX * Math.sin(RX) - TY * Math.sin(RY) * Math.cos(RX)
             TX = 0
             TY = 0
         })
         window.addEventListener('wheel', function (e) {
             var size = 2 * Math.abs(e.deltaY) / e.deltaY
+            if(distance + size < 10 || distance + size > 200) {
+                distance += 0
+                return
+            }
             distance += size
         })
         window.oncontextmenu = function (e) {
