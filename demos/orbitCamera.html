@@ -25,7 +25,6 @@
         var scene = new THREE.Scene()
         var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, .1, 1000)
         var distance = 100
-        var vector = new THREE.Vector3(30, 30, 30)
 
         camera.position.x = distance * Math.sin(RX) * Math.cos(RY)
         camera.position.y = distance * Math.sin(RY)
@@ -85,37 +84,6 @@
             renderer.render(scene, camera)
             requestAnimationFrame(animate)
         }
-        ctrl = new function() {
-            this.rotationSpeed = 0.02
-            this.objs = 0
-            this.addCube = function () {
-                var l = Math.ceil(Math.random() * 3)
-                var cubeG = new THREE.BoxGeometry(l, l, l)
-                var cubeM = new THREE.MeshLambertMaterial({
-                    color: (Math.random() * .5 + .5) *  0xffffff
-                })
-                var cube = new THREE.Mesh(cubeG, cubeM)
-                cube.castShadow = true
-                cube.name = 'cube' + scene.children.length
-                cube.position.x = 60 * (Math.random() - .5)
-                cube.position.y = 5 * (Math.random())
-                cube.position.z = 30 * (Math.random() - .5)
-                cube.rotation.x = 2 * Math.random() * Math.PI
-                cube.rotation.y = 2 * Math.random() * Math.PI
-                cube.rotation.z = 2 * Math.random() * Math.PI
-                world.add(cube)
-                this.objs = scene.children.length
-            }
-        }
-        var gui = new DAT.GUI()
-        gui.add(ctrl, 'rotationSpeed', 0, 1)
-        gui.add(ctrl, 'addCube')
-        gui.add(ctrl, 'objs').listen()
-        var stats = new Stats()
-        stats.setMode(0)
-        stats.domElement.style.position = 'absolute'
-        stats.domElement.style.right = '0'
-        stats.domElement.style.top = '200px'
 
         document.querySelector("#stats").appendChild(stats.domElement)
         animate()
@@ -154,10 +122,6 @@
         })
         window.addEventListener('wheel', function (e) {
             var size = 2 * Math.abs(e.deltaY) / e.deltaY
-            // if(distance + size < 10 || distance + size > 200) {
-            //     distance += 0
-            //     return
-            // }
             distance += size
         })
         window.oncontextmenu = function (e) {
